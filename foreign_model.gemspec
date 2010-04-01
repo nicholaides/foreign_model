@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Mike Nicholaides"]
-  s.date = %q{2010-03-31}
+  s.date = %q{2010-04-01}
   s.description = %q{Works for ActiveRecord and Mongoid}
   s.email = %q{mike@ablegray.com}
   s.extra_rdoc_files = [
@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
      "README.rdoc",
      "Rakefile",
      "VERSION",
+     "foreign_model.gemspec",
      "lib/foreign_model.rb",
      "spec/foreign_model_spec.rb"
   ]

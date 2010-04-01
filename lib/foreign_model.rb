@@ -3,10 +3,7 @@ module ForeignModel
   
   def self.included(base)
     SCOPE_PROCS[base] ||= {}
-    
-    base.class_eval do
-      extend ClassMethods
-    end
+    base.extend ClassMethods
   end
   
   def self.camelize(str)
