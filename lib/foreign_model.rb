@@ -18,7 +18,10 @@ module ForeignModel
         if options[:scope]
           options[:scope]
         elsif options[:polymorphic]
-          proc{|r| eval( r.send("#{name}_type") ) }
+          proc do |r|
+            type = r.send("#{name}_type")
+            type and eval(type)
+          end
         else
           #TODO: this is a hack
           proc{ eval(options[:class_name]) }

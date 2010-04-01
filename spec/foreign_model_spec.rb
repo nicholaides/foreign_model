@@ -56,6 +56,15 @@ describe "belongs_to_foreign_model" do
     it "should set the parent_id" do
       @child.parent_id.should == @parent.id
     end
+    
+    context "when nil" do
+      it "should the assiated model should be nil" do
+        @child  = Child.new
+        @child.parent_id = nil
+        
+        @child.parent.should be_nil
+      end
+    end
   end
 
   describe "with :scope => proc{...}" do
@@ -76,6 +85,14 @@ describe "belongs_to_foreign_model" do
       Scope.should_receive(:find).with("another id").and_return(@parent)
       
       @child.parent.should == @parent
+    end
+    
+    context "when parent_id is nil" do
+      it "should give nil as the assiated record" do
+        @child = ChildWithScope.new
+        @child.parent_id = nil
+        @child.parent.should be_nil
+      end 
     end
   end
   
@@ -100,6 +117,14 @@ describe "belongs_to_foreign_model" do
       
       @child.parent.id.should == "another id"
       @child.parent.should be_a(SomeModule::OtherParent)
+    end
+    
+    context "when parent_id is nil" do
+      it "should give nil as the assiated record" do
+        @child = ChildWithClassName.new
+        @child.parent_id = nil
+        @child.parent.should be_nil
+      end 
     end
   end
 
@@ -153,6 +178,33 @@ describe "belongs_to_foreign_model" do
       @child.parent_type = "FosterParent"
       
       @child.parent.should == @foster_parent
+    end
+    
+    context "when parent_id is nil" do
+      it "should give nil as the assiated record" do
+        @child = ChildWithPolymorphicParents.new
+        @child.parent_id = nil
+        @child.parent_type = "FosterParent"
+        @child.parent.should be_nil
+      end 
+    end
+    
+    context "when parent_type is nil" do
+      it "should give nil as the assiated record" do
+        @child = ChildWithPolymorphicParents.new
+        @child.parent_id = "2"
+        @child.parent_type = nil
+        @child.parent.should be_nil
+      end 
+    end
+    
+    context "when parent_id and parent_type are nil" do
+      it "should give nil as the assiated record" do
+        @child = ChildWithPolymorphicParents.new
+        @child.parent_id = nil
+        @child.parent_type = nil
+        @child.parent.should be_nil
+      end 
     end
   end
 end
