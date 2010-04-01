@@ -47,20 +47,33 @@ module ForeignModel
 
         def #{name}_id=(foreign_model_id)
           if #{name}_id != foreign_model_id
-            
-            case self.class.name
-            when "ActiveRecord::Base"
-              super
-            when "Mongoid::Document"
-              raw_attributes['#{name}_id'] = foreign_model_id
-            else
-              @#{name}_id = foreign_model_id
-            end
-            
+            write_raw_attribute("#{name}_id", foreign_model_id)
             @#{name} = nil
           end
         end
       `
+    end
+  end
+end
+
+class Object
+  def write_raw_attribute(name, value)
+    instance_variable_set "@#{name}".to_sym, value
+  end
+end
+
+module ActiveRecord
+  class Base
+    def write_raw_attribute(name, value)
+      write_attribute name.to_sym, value
+    end
+  end
+end
+
+module Mongoid
+  module Document
+    def write_raw_attribute(name, value)
+      raw_attributes[name.to_s] = value
     end
   end
 end
