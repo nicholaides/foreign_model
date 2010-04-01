@@ -20,8 +20,10 @@ module ForeignModel
       ForeignModel::SCOPE_PROCS[self][name.to_s] = begin
         if options[:scope]
           options[:scope]
+        elsif options[:polymorphic]
+          proc{|r| eval( r.send("#{name}_type") ) }
         else
-          #TODO: eval seems like a hack
+          #TODO: this is a hack
           proc{ eval(options[:class_name]) }
         end
       end
@@ -32,16 +34,17 @@ module ForeignModel
             ForeignModel::SCOPE_PROCS[self.class]["#{name}"].call(self)
           end
         end
-      `
-      
-      class_eval %`
+        
         def #{name}
           @#{name} ||= parent_proc_for_#{name}.find(#{name}_id) if parent_proc_for_#{name} && #{name}_id 
         end
 
         def #{name}=(foreign_model)
           @#{name} = foreign_model
-          send('#{name}_id=', foreign_model.id) if foreign_model
+          if foreign_model
+            send('#{name}_id=', foreign_model.id)
+            send('#{name}_type=', foreign_model.class.name) if respond_to? '#{name}_type='
+          end
         end
 
         def #{name}_id=(foreign_model_id)
@@ -51,6 +54,17 @@ module ForeignModel
           end
         end
       `
+      
+      if options[:polymorphic]
+        class_eval %`  
+          def #{name}_type=(foreign_model_type)
+            if #{name}_type != foreign_model_type
+              write_raw_attribute("#{name}_type", foreign_model_type)
+              @#{name} = nil
+            end
+          end
+        `
+      end
     end
   end
 end

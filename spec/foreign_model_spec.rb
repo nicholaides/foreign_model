@@ -79,7 +79,7 @@ describe "belongs_to_foreign_model" do
     end
   end
   
-  describe "with :classname option" do
+  describe "with :class_name option" do
     class ChildWithClassName
       attr_reader :parent_id
       include ForeignModel
@@ -100,6 +100,59 @@ describe "belongs_to_foreign_model" do
       
       @child.parent.id.should == "another id"
       @child.parent.should be_a(SomeModule::OtherParent)
+    end
+  end
+
+  describe "with :polymorphic => true" do
+    class FosterParent
+      attr_accessor :id
+      def initialize(id="some_id")
+        @id = id
+      end
+
+      def self.find(id)
+        new(id)
+      end
+
+      def ==(other)
+        self.class == other.class && self.id == other.id
+      end
+    end
+    
+    class ChildWithPolymorphicParents
+      attr_reader :parent_id
+      attr_reader :parent_type
+      include ForeignModel
+      belongs_to_foreign_model :parent, :polymorphic => true
+    end
+    
+    before :each do
+      @parent        = Parent.new
+      @foster_parent = FosterParent.new
+      @child         = ChildWithPolymorphicParents.new
+    end
+    
+    it "should set the parent to a Parent" do
+      @child.parent = @parent
+      
+      @child.parent.should      == @parent
+      @child.parent_id.should   == @parent.id
+      @child.parent_type.should == "Parent"
+    end
+    
+    it "should set the parent to a FosterParent" do
+      @child.parent = @foster_parent
+      
+      @child.parent.should      == @foster_parent
+      @child.parent_id.should   == @foster_parent.id
+      @child.parent_type.should == "FosterParent"
+    end
+    
+    it "should set the parent by id and type" do
+      @child.parent_id   = @foster_parent.id
+      @child.parent_type = "FosterParent"
+      
+      @child.parent.should == @foster_parent
     end
   end
 end
