@@ -156,3 +156,26 @@ describe "belongs_to_foreign_model" do
     end
   end
 end
+
+describe "has_many_foreign_models" do
+  class HmfParent
+    attr_accessor :id
+    def initialize(id="some_id")
+      @id = id
+    end
+    has_many_foreign_models :hmf_children
+  end
+  
+  class HmfChild
+    attr_accessor :id
+    attr_accessor :parent_id
+    def initialize(id="some_id", parent_id="parent_id")
+      @id        = id
+      @parent_id = parent_id
+    end
+    
+    def self.find_many(parent_id)
+      [HmfChild.new("id1", parent_id), HmfChild("id2", parent_id)]
+    end
+  end
+end
