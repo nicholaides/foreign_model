@@ -16,24 +16,23 @@ module ForeignModel
   module ClassMethods
     def belongs_to_foreign_model(name, options={})
       options[:class_name] ||= ForeignModel.camelize(name.to_s)
-      if options[:scope]
-        ForeignModel::SCOPE_PROCS[self][name.to_s] = options[:scope]
-        
-        class_eval %`
-          def parent_proc_for_#{name}
-            @parent_proc_for_#{name} ||= begin
-              ForeignModel::SCOPE_PROCS[self.class]["#{name}"].call(self)
-            end
-          end
-        `
-        
-      else
-        class_eval %`
-          def parent_proc_for_#{name}
-            #{options[:class_name]}
-          end
-        `
+      
+      ForeignModel::SCOPE_PROCS[self][name.to_s] = begin
+        if options[:scope]
+          options[:scope]
+        else
+          #TODO: eval seems like a hack
+          proc{ eval(options[:class_name]) }
+        end
       end
+        
+      class_eval %`
+        def parent_proc_for_#{name}
+          @parent_proc_for_#{name} ||= begin
+            ForeignModel::SCOPE_PROCS[self.class]["#{name}"].call(self)
+          end
+        end
+      `
       
       class_eval %`
         def #{name}
