@@ -58,9 +58,18 @@ describe "belongs_to_foreign_model" do
     end
     
     context "when nil" do
-      it "should the assiated model should be nil" do
+      it "should make the assiated model should be nil" do
         @child  = Child.new
         @child.parent_id = nil
+        
+        @child.parent.should be_nil
+      end
+    end
+    
+    context "when blank" do
+      it "should make the assiated model should be nil" do
+        @child  = Child.new
+        @child.parent_id = ""
         
         @child.parent.should be_nil
       end

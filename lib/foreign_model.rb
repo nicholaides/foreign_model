@@ -36,7 +36,7 @@ module ForeignModel
         end
         
         def #{name}
-          @#{name} ||= parent_proc_for_#{name}.find(#{name}_id) if parent_proc_for_#{name} && #{name}_id 
+          @#{name} ||= parent_proc_for_#{name}.find(#{name}_id) if parent_proc_for_#{name} && #{name}_id && #{name}_id != ""
         end
 
         def #{name}=(foreign_model)
