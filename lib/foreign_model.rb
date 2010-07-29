@@ -28,24 +28,26 @@ module ForeignModel
         end
       end
       
-      define_method "parent_proc_for_#{name}" do
-        unless instance_variable_get "@parent_proc_for_#{name}"
-          instance_variable_set "@parent_proc_for_#{name}", ForeignModel::SCOPE_PROCS[self.class][name].call(self)
-        end
-        instance_variable_get "@parent_proc_for_#{name}"
+      define_method :_foreign_models do
+        @_foreign_models ||= {}
+      end
+      
+      define_method :_parent_procs do
+        @_parent_procs ||= {}
+      end
+       
+      define_method :parent_proc_for do |foreign_model_name|
+        _parent_procs[foreign_model_name] ||= ForeignModel::SCOPE_PROCS[self.class][foreign_model_name].call(self)
       end
       
       define_method name do
-        if send("parent_proc_for_#{name}") && send("#{name}_id") && send("#{name}_id") != ""
-          unless instance_variable_get "@#{name}"
-            instance_variable_set "@#{name}", send("parent_proc_for_#{name}").find(send("#{name}_id"))
-          end
+        if parent_proc_for(name) && send("#{name}_id") && send("#{name}_id") != ""
+          _foreign_models[name] ||= parent_proc_for(name).find(send("#{name}_id"))
         end
-        instance_variable_get "@#{name}"
       end
       
       define_method "#{name}=" do |foreign_model|
-        instance_variable_set "@#{name}", foreign_model
+        _foreign_models[name] = foreign_model
         if foreign_model
           send("#{name}_id=",   foreign_model.id)
           send("#{name}_type=", foreign_model.class.name) if respond_to? "#{name}_type="
@@ -55,7 +57,7 @@ module ForeignModel
       define_method "#{name}_id=" do |foreign_model_id|
         if send("#{name}_id") != foreign_model_id
           write_raw_attribute("#{name}_id", foreign_model_id)
-          instance_variable_set "@#{name}", nil
+          _foreign_models[name] = nil
         end
       end
       
@@ -63,7 +65,7 @@ module ForeignModel
         define_method "#{name}_type=" do |foreign_model_type|
           if send("#{name}_type") != foreign_model_type
             write_raw_attribute("#{name}_type", foreign_model_type)
-            instance_variable_set "@#{name}", nil
+            _foreign_models[name] = nil
           end
         end
       end
