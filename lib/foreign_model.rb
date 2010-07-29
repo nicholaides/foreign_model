@@ -12,9 +12,9 @@ module ForeignModel
   
   module ClassMethods
     def belongs_to_foreign_model(name, options={})
-      options[:class_name] ||= ForeignModel.camelize(name.to_s)
+      options[:class_name] ||= ForeignModel.camelize(name)
       
-      ForeignModel::SCOPE_PROCS[self][name.to_s] = begin
+      ForeignModel::SCOPE_PROCS[self][name] = begin
         if options[:scope]
           options[:scope]
         elsif options[:polymorphic]
@@ -27,43 +27,45 @@ module ForeignModel
           proc{ eval(options[:class_name]) }
         end
       end
-        
-      class_eval %`
-        def parent_proc_for_#{name}
-          @parent_proc_for_#{name} ||= begin
-            ForeignModel::SCOPE_PROCS[self.class]["#{name}"].call(self)
+      
+      define_method "parent_proc_for_#{name}" do
+        unless instance_variable_get "@parent_proc_for_#{name}"
+          instance_variable_set "@parent_proc_for_#{name}", ForeignModel::SCOPE_PROCS[self.class][name].call(self)
+        end
+        instance_variable_get "@parent_proc_for_#{name}"
+      end
+      
+      define_method name do
+        if send("parent_proc_for_#{name}") && send("#{name}_id") && send("#{name}_id") != ""
+          unless instance_variable_get "@#{name}"
+            instance_variable_set "@#{name}", send("parent_proc_for_#{name}").find(send("#{name}_id"))
           end
         end
-        
-        def #{name}
-          @#{name} ||= parent_proc_for_#{name}.find(#{name}_id) if parent_proc_for_#{name} && #{name}_id && #{name}_id != ""
+        instance_variable_get "@#{name}"
+      end
+      
+      define_method "#{name}=" do |foreign_model|
+        instance_variable_set "@#{name}", foreign_model
+        if foreign_model
+          send("#{name}_id=",   foreign_model.id)
+          send("#{name}_type=", foreign_model.class.name) if respond_to? "#{name}_type="
         end
-
-        def #{name}=(foreign_model)
-          @#{name} = foreign_model
-          if foreign_model
-            send('#{name}_id=', foreign_model.id)
-            send('#{name}_type=', foreign_model.class.name) if respond_to? '#{name}_type='
-          end
+      end
+      
+      define_method "#{name}_id=" do |foreign_model_id|
+        if send("#{name}_id") != foreign_model_id
+          write_raw_attribute("#{name}_id", foreign_model_id)
+          instance_variable_set "@#{name}", nil
         end
-
-        def #{name}_id=(foreign_model_id)
-          if #{name}_id != foreign_model_id
-            write_raw_attribute("#{name}_id", foreign_model_id)
-            @#{name} = nil
-          end
-        end
-      `
+      end
       
       if options[:polymorphic]
-        class_eval %`  
-          def #{name}_type=(foreign_model_type)
-            if #{name}_type != foreign_model_type
-              write_raw_attribute("#{name}_type", foreign_model_type)
-              @#{name} = nil
-            end
+        define_method "#{name}_type=" do |foreign_model_type|
+          if send("#{name}_type") != foreign_model_type
+            write_raw_attribute("#{name}_type", foreign_model_type)
+            instance_variable_set "@#{name}", nil
           end
-        `
+        end
       end
     end
   end
