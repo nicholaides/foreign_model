@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{foreign_model}
-  s.version = "0.2.0"
+  s.version = "0.2.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Mike Nicholaides"]
-  s.date = %q{2010-04-13}
+  s.date = %q{2010-07-29}
   s.description = %q{Works for ActiveRecord and Mongoid}
   s.email = %q{mike@ablegray.com}
   s.extra_rdoc_files = [
